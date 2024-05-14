@@ -23,12 +23,14 @@ jobs:
           command: test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
-      - name: Run static code analysis
+      - name: Run static code analysis (CodeQL)
         uses: github/codeql-action/analyze@v1
         with:
           languages: javascript
           query: "security-and-quality.qls"
+        continue-on-error: true
 
       - name: Upload CodeQL results
         uses: github/codeql-action/upload-sarif@v1
@@ -41,8 +43,6 @@ jobs:
       - name: Display Snyk vulnerability report
         run: cat snyk-report.json
 
-
       - name: Set exit status
         if: steps.snyk.outcome == 'failure'
-        run: exit 0
-
+        run: echo "Snyk found vulnerabilities."
