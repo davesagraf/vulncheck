@@ -136,7 +136,8 @@
     "winston-syslog": "^2.7.0",
     "date-fns": "2.30.0",
     "webpack-node-externals": "3.0.0",
-    "copy-webpack-plugin": "11.0.0"
+    "copy-webpack-plugin": "11.0.0",
+    "xml2js-parser": "1.1.1"
   },
   "jest": {
     "moduleFileExtensions": [
