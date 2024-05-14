@@ -12,26 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install Snyk CLI to HTML
+        run: npm install snyk-to-html -g
       - name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
-          command: test --all-projects --json-file-output=snyk_dependencies.json
-        continue-on-error: true
+          command: test --json | snyk-to-html -o results-opensource.html
+        # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   code-security:
     runs-on: ubuntu-latest
-    outputs:
-      code-ok: ${{ steps.snyk-code-output.outputs.is-secure }}
     steps:
       - uses: actions/checkout@v2
       - name: Run Snyk to check for vulnerabilities in code
-        id: snyk-code
         uses: snyk/actions/node@master
         with:
-          command: code test --all-projects --json-file-output=snyk_code.json
-        continue-on-error: true
+          command: code test --json | snyk-to-html -o results-code.html
+        # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -42,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Accept or Decline PR based on Snyk Results
-        if: ${{ ! contains(needs.opensource-security.result, 'failure') && ! contains(needs.code-security.result, 'failure') }}
+        if: ${{ ! needs.opensource-security.result == failure() && ! needs.code-security.result == failure() }}
         run: 
           echo "No vulnerabilities found, PR can be merged."
           
@@ -52,14 +51,14 @@ jobs:
           echo "Vulnerabilities found, declining PR."
           exit 1 
 
-  summary-report:
-    needs: [opensource-security, code-security]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2    
-      - name: Add Job Summary from Snyk reports
-        uses: medly/snyk-job-summary-action@v1.0.0
-        with:
-            dependencies-report-path: snyk_dependencies.json 
-            code-report-path: snyk_code.json 
-        if: always()
+  # summary-report:
+  #   needs: [opensource-security, code-security]
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   steps:
+  #     - uses: actions/checkout@v2    
+  #     - name: Add Job Summary from Snyk reports
+  #       uses: medly/snyk-job-summary-action@v1.0.0
+  #       with:
+  #           dependencies-report-path: snyk_dependencies.json 
+  #           code-report-path: snyk_code.json
