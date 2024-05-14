@@ -16,6 +16,10 @@ jobs:
         uses: snyk/actions/node@master
         with:
           command: test
+          scan-type: 'fs'
+          ignore-unfixed: true
+          output: snyk.txt
+          exit-code: '1'
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
@@ -31,7 +35,6 @@ jobs:
         with:
           command: code test
 
-#---------------- release
   release:
     needs: [opensource-security, code-security]
     runs-on: ubuntu-latest
@@ -56,6 +59,25 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
+
+  opensource-report:
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Snyk Open Source Output to Summary
+        if: always()
+        run: |
+          if [[ -s snyk.txt ]]; then
+            {
+              echo "### Trivy Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```Report'
+              cat snyk.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
 
 
 # name: Security Checks
