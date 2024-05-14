@@ -93,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Snyk Open Source Reports
-          paths: snyk-dependency-output.json
+          path: snyk-dependency-output.json
 
   code-report:
     needs: [code-security]
@@ -106,4 +106,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Snyk Code Reports
-          paths: snyk-code-output.json
+          path: snyk-code-output.json
