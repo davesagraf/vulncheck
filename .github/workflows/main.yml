@@ -12,12 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Snyk CLI to HTML
-        run: npm install snyk-to-html -g
       - name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
-          command: test --json | snyk-to-html -o results-opensource.html
+          command: test --json | -o snyk_dependencies.json
         # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -29,7 +27,7 @@ jobs:
       - name: Run Snyk to check for vulnerabilities in code
         uses: snyk/actions/node@master
         with:
-          command: code test --json | snyk-to-html -o results-code.html
+          command: code test --json | -o snyk_code.json
         # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -51,14 +49,14 @@ jobs:
           echo "Vulnerabilities found, declining PR."
           exit 1 
 
-  # summary-report:
-  #   needs: [opensource-security, code-security]
-  #   runs-on: ubuntu-latest
-  #   if: always()
-  #   steps:
-  #     - uses: actions/checkout@v2    
-  #     - name: Add Job Summary from Snyk reports
-  #       uses: medly/snyk-job-summary-action@v1.0.0
-  #       with:
-  #           dependencies-report-path: snyk_dependencies.json 
-  #           code-report-path: snyk_code.json
+  summary-report:
+    needs: [opensource-security, code-security]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v2    
+      - name: Add Job Summary from Snyk reports
+        uses: medly/snyk-job-summary-action@v1.0.0
+        with:
+            dependencies-report-path: snyk_dependencies.json 
+            code-report-path: snyk_code.json
