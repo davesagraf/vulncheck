@@ -95,6 +95,21 @@ jobs:
           name: Snyk Open Source Reports
           path: snyk-dependency-output.json
 
+      - name: Publish Snyk Open Source Report to Summary
+        if: always()
+        run: |
+          if [[ -s snyk-dependency-output.json ]]; then
+            {
+              echo "### Snyk Open Source Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```Report'
+              cat snyk-dependency-output.json
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+
   code-report:
     needs: [code-security]
     runs-on: ubuntu-latest
@@ -107,3 +122,18 @@ jobs:
         with:
           name: Snyk Code Reports
           path: snyk-code-output.json
+
+      - name: Publish Snyk Code Report to Summary
+        if: always()
+        run: |
+          if [[ -s snyk-code-output.json ]]; then
+            {
+              echo "### Snyk Code Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```Report'
+              cat snyk-code-output.json
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
