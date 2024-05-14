@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
@@ -19,6 +20,15 @@ jobs:
         # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install Snyk To HTML
+        run: npm install snyk-to-html -g
+      - name: Generate Report for Snyk Open Source
+        run: snyk-to-html -i snyk_dependencies.json -o snyk_dependencies.html
 
   code-security:
     runs-on: ubuntu-latest
@@ -31,6 +41,15 @@ jobs:
         # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install Snyk To HTML
+        run: npm install snyk-to-html -g
+      - name: Generate Report for Snyk Open Source
+        run: snyk-to-html -i snyk_dependencies.json -o snyk_dependencies.html
 
   handle-pr:
     needs: [opensource-security, code-security]
@@ -49,14 +68,14 @@ jobs:
           echo "Vulnerabilities found, declining PR."
           exit 1 
 
-  summary-report:
-    needs: [opensource-security, code-security]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - uses: actions/checkout@v2    
-      - name: Add Job Summary from Snyk reports
-        uses: medly/snyk-job-summary-action@v1.0.0
-        with:
-            dependencies-report-path: snyk_dependencies.json 
-            code-report-path: snyk_code.json
+  # summary-report:
+  #   needs: [opensource-security, code-security]
+  #   runs-on: ubuntu-latest
+  #   if:always()
+  #   steps:
+  #     - uses: actions/checkout@v2    
+  #     - name: Add Job Summary from Snyk reports
+  #       uses: medly/snyk-job-summary-action@v1.0.0
+  #       with:
+  #           dependencies-report-path: snyk_dependencies.json 
+  #           code-report-path: snyk_code.json
