@@ -2,9 +2,9 @@ name: NodeJS CI/CD with Snyk
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
         uses: snyk/actions/node@master
         with:
           command: test
-          json: true  
+          json: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - name: Save Snyk Open Source Output
@@ -51,7 +51,7 @@ jobs:
         uses: snyk/actions/node@master
         with:
           command: code test
-          json: true 
+          json: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - name: Save Snyk Code Output
@@ -82,99 +82,28 @@ jobs:
             echo "Vulnerabilities found, declining PR."
             exit 1  # This will fail the workflow if vulnerabilities are found
 
-  report:
-    needs: [opensource-security, code-security]
+  open-source-report:
+    needs: [opensource-security]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-      - name: Upload Snyk Reports
+      - name: Upload Snyk Open Source Reports
         uses: actions/upload-artifact@v2
         with:
-          name: Snyk Reports
-          paths:
-            - snyk-dependency-output.json
-            - snyk-code-output.json
+          name: Snyk Open Source Reports
+          paths: snyk-dependency-output.json
 
-
-# name: NodeJS CI/CD with Snyk
-
-# on:
-#   push:
-#     branches: [ master ]
-#   workflow_dispatch:
-
-# jobs:
-#   opensource-security:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - name: Install dependencies
-#         run: npm install --legacy-peer-deps
-#       - name: Run Snyk to check for vulnerabilities in dependencies
-#         uses: snyk/actions/node@master
-#         with:
-#           command: test
-#           scan-type: 'fs'
-#           ignore-unfixed: true
-#           output: snyk.txt
-#           exit-code: '1'
-#         env:
-#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#         continue-on-error: true
-
-#   code-security:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - name: Run Snyk to check for vulnerabilities in code
-#         uses: snyk/actions/node@master
-#         env:
-#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#         with:
-#           command: code test
-
-#   release:
-#     needs: [opensource-security, code-security]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
-#       - name: Set Git user
-#         run: |
-#           git config user.email "mrdavidsaguev@proton.me"
-#           git config user.name "dave"
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-#   opensource-monitor:
-#     needs: [release]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - name: Run Snyk to check for vulnerabilities
-#         uses: snyk/actions/node@master
-#         env:
-#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#         with:
-#           command: monitor
-
-#   opensource-report:
-#     needs: [release]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Publish Snyk Open Source Output to Summary
-#         if: always()
-#         run: |
-#           if [[ -s snyk.txt ]]; then
-#             {
-#               echo "### Trivy Output"
-#               echo "<details><summary>Click to expand</summary>"
-#               echo ""
-#               echo '```Report'
-#               cat snyk.txt
-#               echo '```'
-#               echo "</details>"
-#             } >> $GITHUB_STEP_SUMMARY
-#           fi
+  code-report:
+    needs: [code-security]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Upload Snyk Code Reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: Snyk Code Reports
+          paths: snyk-code-output.json
