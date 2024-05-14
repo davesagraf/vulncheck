@@ -21,7 +21,7 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: snyk-dependencies-report
           path: snyk_dependencies.json
@@ -39,7 +39,7 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: snyk-code-report
           path: snyk_code.json
@@ -66,11 +66,11 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@master
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: snyk-dependencies-report
           path: .
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: snyk-code-report
           path: .
