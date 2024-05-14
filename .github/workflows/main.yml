@@ -14,8 +14,8 @@ jobs:
       security-ok: ${{ steps.snyk-output.outputs.is-secure }}
     steps:
       - uses: actions/checkout@v2
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      # - name: Install jq
+      #   run: sudo apt-get update && sudo apt-get install -y jq
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       - name: Run Snyk to check for vulnerabilities in dependencies
@@ -26,12 +26,10 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      - name: Save Snyk Open Source Output
-        run: echo "${{ steps.snyk.outputs.json }}" > snyk-dependency-output.json
       - name: Determine if Snyk found vulnerabilities
         id: snyk-output
         run: |
-          vulnerabilities=$(jq '.issues.vulnerabilities | length' snyk-dependency-output.json)
+          vulnerabilities=$(jq '.issues.vulnerabilities | length' snyk_dependencies.json)
           if [[ "$vulnerabilities" -eq 0 ]]; then
             echo "::set-output name=is-secure::true"
           else
@@ -44,8 +42,8 @@ jobs:
       code-ok: ${{ steps.snyk-code-output.outputs.is-secure }}
     steps:
       - uses: actions/checkout@v2
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      # - name: Install jq
+      #   run: sudo apt-get update && sudo apt-get install -y jq
       - name: Run Snyk to check for vulnerabilities in code
         id: snyk-code
         uses: snyk/actions/node@master
@@ -54,12 +52,10 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      - name: Save Snyk Code Output
-        run: echo "${{ steps.snyk-code.outputs.json }}" > snyk-code-output.json
       - name: Determine if Snyk Code found vulnerabilities
         id: snyk-code-output
         run: |
-          vulnerabilities=$(jq '.issues.vulnerabilities | length' snyk-code-output.json)
+          vulnerabilities=$(jq '.issues.vulnerabilities | length' snyk_code.json)
           if [[ "$vulnerabilities" -eq 0 ]]; then
             echo "::set-output name=is-secure::true"
           else
