@@ -68,12 +68,12 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/download-artifact@v4
         with:
-          name: snyk-dependencies-report
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
-          name: snyk-code-report
-          path: .
+          name:
+          path: 
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     name: snyk-code-report
+      #     path: .
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
