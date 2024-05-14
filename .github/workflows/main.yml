@@ -3,100 +3,178 @@ name: NodeJS CI/CD with Snyk
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
   opensource-security:
     runs-on: ubuntu-latest
+    outputs:
+      security-ok: ${{ steps.snyk-output.outputs.is-secure }}
     steps:
       - uses: actions/checkout@v2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       - name: Run Snyk to check for vulnerabilities in dependencies
+        id: snyk
         uses: snyk/actions/node@master
         with:
           command: test
-          scan-type: 'fs'
-          ignore-unfixed: true
-          output: snyk.txt
-          exit-code: '1'
+          json: true  
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
+      - name: Save Snyk Open Source Output
+        run: echo "${{ steps.snyk.outputs.json }}" > snyk-dependency-output.json
+      - name: Determine if Snyk found vulnerabilities
+        id: snyk-output
+        run: |
+          vulnerabilities=$(jq '.issues.vulnerabilities | length' snyk-dependency-output.json)
+          if [[ "$vulnerabilities" -eq 0 ]]; then
+            echo "::set-output name=is-secure::true"
+          else
+            echo "::set-output name=is-secure::false"
+          fi
 
   code-security:
     runs-on: ubuntu-latest
+    outputs:
+      code-ok: ${{ steps.snyk-code-output.outputs.is-secure }}
     steps:
       - uses: actions/checkout@v2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       - name: Run Snyk to check for vulnerabilities in code
+        id: snyk-code
         uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test
+          json: true 
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Save Snyk Code Output
+        run: echo "${{ steps.snyk-code.outputs.json }}" > snyk-code-output.json
+      - name: Determine if Snyk Code found vulnerabilities
+        id: snyk-code-output
+        run: |
+          vulnerabilities=$(jq '.issues.vulnerabilities | length' snyk-code-output.json)
+          if [[ "$vulnerabilities" -eq 0 ]]; then
+            echo "::set-output name=is-secure::true"
+          else
+            echo "::set-output name=is-secure::false"
+          fi
 
-  release:
+  handle-pr:
+    needs: [opensource-security, code-security]
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Accept or Decline PR based on Snyk Results
+        run: |
+          if [[ "${{ needs.opensource-security.outputs.security-ok }}" == "true" && "${{ needs.code-security.outputs.code-ok }}" == "true" ]]; then
+            echo "No vulnerabilities found, PR can be merged."
+          else
+            echo "Vulnerabilities found, declining PR."
+            exit 1  # This will fail the workflow if vulnerabilities are found
+
+  report:
     needs: [opensource-security, code-security]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set Git user
-        run: |
-          git config user.email "mrdavidsaguev@proton.me"
-          git config user.name "dave"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  opensource-monitor:
-    needs: [release]
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions/checkout@v2
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Upload Snyk Reports
+        uses: actions/upload-artifact@v2
         with:
-          command: monitor
-
-  opensource-report:
-    needs: [release]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish Snyk Open Source Output to Summary
-        if: always()
-        run: |
-          if [[ -s snyk.txt ]]; then
-            {
-              echo "### Trivy Output"
-              echo "<details><summary>Click to expand</summary>"
-              echo ""
-              echo '```Report'
-              cat snyk.txt
-              echo '```'
-              echo "</details>"
-            } >> $GITHUB_STEP_SUMMARY
-          fi
+          name: Snyk Reports
+          paths:
+            - snyk-dependency-output.json
+            - snyk-code-output.json
 
 
-# name: Security Checks
+# name: NodeJS CI/CD with Snyk
 
 # on:
 #   push:
-#     branches:
-#       - master
+#     branches: [ master ]
+#   workflow_dispatch:
 
 # jobs:
-#   security:
+#   opensource-security:
 #     runs-on: ubuntu-latest
-
 #     steps:
+#       - uses: actions/checkout@v2
+#       - name: Install dependencies
+#         run: npm install --legacy-peer-deps
 #       - name: Run Snyk to check for vulnerabilities in dependencies
-#         id: snyk
 #         uses: snyk/actions/node@master
 #         with:
 #           command: test
+#           scan-type: 'fs'
+#           ignore-unfixed: true
+#           output: snyk.txt
+#           exit-code: '1'
 #         env:
 #           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 #         continue-on-error: true
+
+#   code-security:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Run Snyk to check for vulnerabilities in code
+#         uses: snyk/actions/node@master
+#         env:
+#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+#         with:
+#           command: code test
+
+#   release:
+#     needs: [opensource-security, code-security]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v2
+#       - name: Set Git user
+#         run: |
+#           git config user.email "mrdavidsaguev@proton.me"
+#           git config user.name "dave"
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#   opensource-monitor:
+#     needs: [release]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Run Snyk to check for vulnerabilities
+#         uses: snyk/actions/node@master
+#         env:
+#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+#         with:
+#           command: monitor
+
+#   opensource-report:
+#     needs: [release]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Publish Snyk Open Source Output to Summary
+#         if: always()
+#         run: |
+#           if [[ -s snyk.txt ]]; then
+#             {
+#               echo "### Trivy Output"
+#               echo "<details><summary>Click to expand</summary>"
+#               echo ""
+#               echo '```Report'
+#               cat snyk.txt
+#               echo '```'
+#               echo "</details>"
+#             } >> $GITHUB_STEP_SUMMARY
+#           fi
