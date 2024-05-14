@@ -15,7 +15,7 @@ jobs:
       - name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
-          command: test --json | -o snyk_dependencies.json
+          command: test --json > snyk_dependencies.json
         # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -27,7 +27,7 @@ jobs:
       - name: Run Snyk to check for vulnerabilities in code
         uses: snyk/actions/node@master
         with:
-          command: code test --json | -o snyk_code.json
+          command: code test --json > snyk_code.json
         # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
