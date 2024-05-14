@@ -1,11 +1,42 @@
-name: Check vulnerabilities using Snyk
-on: push
+name: Security Checks
+
+on:
+  push:
+    branches:
+      - master
+
 jobs:
   security:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
+        with:
+          command: test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run static code analysis
+        uses: github/codeql-action/analyze@v1
+        with:
+          languages: javascript
+          query: "security-and-quality.qls"
+
+      - name: Upload CodeQL results
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{github.workspace}}/codeql-results.sarif
+
+      - name: Generate Snyk vulnerability report
+        run: snyk test --all-projects --json > snyk-report.json
+
+      - name: Display Snyk vulnerability report
+        run: cat snyk-report.json
+
