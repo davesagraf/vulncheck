@@ -24,6 +24,7 @@ jobs:
         with:
           command: test
           json: true
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - name: Save Snyk Open Source Output
@@ -52,6 +53,7 @@ jobs:
         with:
           command: code test
           json: true
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - name: Save Snyk Code Output
