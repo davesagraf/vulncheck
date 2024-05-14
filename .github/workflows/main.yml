@@ -42,12 +42,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Accept or Decline PR based on Snyk Results
-        run: |
-          if [!contains(needs.*.result, 'failure')]; then
-            echo "No vulnerabilities found, PR can be merged."
-          else
-            echo "Vulnerabilities found, declining PR."
-            exit 1  # This will fail the workflow if vulnerabilities are found
+        if: ${{ ! contains(needs.opensource-security.result, 'failure') && ! contains(needs.code-security.result, 'failure') }}
+        run: 
+          echo "No vulnerabilities found, PR can be merged."
+          
+      - name: PR post decline step
+        if: ${{ failure() }}
+        run: 
+          echo "Vulnerabilities found, declining PR."
+          exit 1 
 
   summary-report:
     needs: [opensource-security, code-security]
