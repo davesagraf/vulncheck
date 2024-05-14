@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-
       - name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
@@ -22,11 +21,15 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: snyk-dependencies-report
+          path: snyk_dependencies.json
 
   code-security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
       - name: Run Snyk to check for vulnerabilities in code
         uses: snyk/actions/node@master
         with:
@@ -36,18 +39,21 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: snyk-code-report
+          path: snyk_code.json
 
   handle-pr:
     needs: [opensource-security, code-security]
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
       - name: Accept or Decline PR based on Snyk Results
         if: ${{ ! needs.opensource-security.result == failure() && ! needs.code-security.result == failure() }}
         run: 
           echo "No vulnerabilities found, PR can be merged."
-          
       - name: PR post decline step
         if: ${{ failure() }}
         run: 
@@ -59,13 +65,15 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - uses: actions/checkout@v2
-      # - name: Add Job Summary from Snyk reports
-      
-        # uses: medly/snyk-job-summary-action@v1.0.0
-        # with:
-        #     dependencies-report-path: snyk_dependencies.json 
-        #     code-report-path: snyk_code.json
+      - uses: actions/checkout@master
+      - uses: actions/download-artifact@v2
+        with:
+          name: snyk-dependencies-report
+          path: .
+      - uses: actions/download-artifact@v2
+        with:
+          name: snyk-code-report
+          path: .
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
