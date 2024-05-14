@@ -1,23 +1,16 @@
-name: Security Checks
+name: NodeJS CI/CD with Snyk
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
-  security:
+  opensource-security:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
+      - uses: actions/checkout@v2
       - name: Run Snyk to check for vulnerabilities in dependencies
-        id: snyk
         uses: snyk/actions/node@master
         with:
           command: test
@@ -25,60 +18,63 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
 
-      # - name: Run static code analysis (CodeQL)
-      #   uses: github/codeql-action/analyze@v1
-      #   with:
-      #     languages: javascript
-      #     query: "security-and-quality.qls"
-      #   continue-on-error: true
+  code-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Snyk to check for vulnerabilities in code
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
 
-      # - name: Upload CodeQL results
-      #   uses: github/codeql-action/upload-sarif@v1
-      #   with:
-      #     sarif_file: ${{github.workspace}}/codeql-results.sarif
-
-      - name: Generate Snyk vulnerability report
-        run: snyk test --all-projects --json > snyk-report.json
-
-      - name: Display Snyk vulnerability report
-        if: always()
+#---------------- release
+  release:
+    needs: [opensource-security, code-security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Set Git user
         run: |
-          if [[ -s snyk-report.json ]]; then
-            {
-              echo "### Snyk Output"
-              echo "<details><summary>Click to expand</summary>"
-              echo ""
-              echo '```Report'
-              cat snyk-report.json
-              echo '```'
-              echo "</details>"
-            } >> $GITHUB_STEP_SUMMARY
-          fi
+          git config user.email "mrdavidsaguev@proton.me"
+          git config user.name "dave"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Set exit status
-      #   if: always()
-      #   run: echo "Snyk found vulnerabilities."
+  opensource-monitor:
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: monitor
 
-      # - name: Trivy scanner
-      #   uses: aquasecurity/trivy-action@master
-      #   with:
-      #     scan-type: 'fs'
-      #     ignore-unfixed: true
-      #     hide-progress: true
-      #     output: trivy.txt
-      #     exit-code: '1'
 
-      # - name: Publish Trivy Output to Summary
-      #   if: always()
-      #   run: |
-      #     if [[ -s trivy.txt ]]; then
-      #       {
-      #         echo "### Trivy Output"
-      #         echo "<details><summary>Click to expand</summary>"
-      #         echo ""
-      #         echo '```Report'
-      #         cat trivy.txt
-      #         echo '```'
-      #         echo "</details>"
-      #       } >> $GITHUB_STEP_SUMMARY
-      #     fi
+# name: Security Checks
+
+# on:
+#   push:
+#     branches:
+#       - master
+
+# jobs:
+#   security:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Run Snyk to check for vulnerabilities in dependencies
+#         id: snyk
+#         uses: snyk/actions/node@master
+#         with:
+#           command: test
+#         env:
+#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+#         continue-on-error: true
