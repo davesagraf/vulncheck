@@ -11,30 +11,81 @@ jobs:
   trivy_security_scan:
     runs-on: ubuntu-latest
     outputs:
-      trivy_scan_output: ${{ steps.trivy_scan.outputs.trivy_scan_output }}
+      trivy_vuln_scan_output: ${{ steps.trivy_vuln_scan.outputs.trivy_vuln_scan_output }}
+      trivy_secret_scan_output: ${{ steps.trivy_secret_scan.outputs.trivy_secret_scan_output }}
+      trivy_config_scan_output: ${{ steps.trivy_config_scan.outputs.trivy_config_scan_output }}
     steps:
       - uses: actions/checkout@master
-      - id: trivy_scan
-        name: Run Trivy scanner
+      - id: trivy_vuln_scan
+        name: Run Trivy Vuln scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: vuln, secret, config
+          scan-type: vuln
           ignore-unfixed: true
           hide-progress: false
-          output: trivy.txt
+          output: trivy_vuln.txt
+
+      - id: trivy_secret_scan
+        name: Run Trivy Secrets scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: secret
+          ignore-unfixed: true
+          hide-progress: false
+          output: trivy_secret.txt
+
+      - id: trivy_config_scan
+        name: Run Trivy Config scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          ignore-unfixed: true
+          hide-progress: false
+          output: trivy_config.txt
           exit-code: '1'
 
-      - name: Publish Trivy Output to Summary
+
+      - name: Publish Trivy Vuln Scan Output to Summary
         if: always()
         run: |
-          if [[ -s trivy.txt ]]; then
+          if [[ -s trivy_vuln.txt ]]; then
             {
-              echo "### Trivy Security Output"
+              echo "### Trivy Vuln Scan Output"
               echo "<details><summary>Click to expand</summary>"
               echo ""
-              echo '```REQ Security Report'
-              cat trivy.txt
+              echo '```REQ Vulnerabilities Report'
+              cat trivy_vuln.txt
               echo '```'
               echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Publish Trivy Secrets Scan Output to Summary
+        if: always()
+        run: |
+          if [[ -s trivy_secret.txt ]]; then
+            {
+            echo "### Trivy Secrets Scan Output"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```REQ Secrets Security Report'
+            cat trivy_secret.txt
+            echo '```'
+            echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Publish Trivy Config Scan Output to Summary
+        if: always()
+        run: |
+          if [[ -s trivy_config.txt ]]; then
+            {
+            echo "### Trivy Config Scan Output"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```REQ Config Security Report'
+            cat trivy_config.txt
+            echo '```'
+            echo "</details>"
             } >> $GITHUB_STEP_SUMMARY
           fi
