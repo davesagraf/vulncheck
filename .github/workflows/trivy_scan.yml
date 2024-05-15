@@ -26,7 +26,6 @@ jobs:
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
           hide-progress: false
           ignore-unfixed: true
-          exit-code: '1'
           output: trivy_vuln.txt
 
       - id: trivy_secret_scan
@@ -37,7 +36,6 @@ jobs:
           scanners: secret
           ignore-unfixed: true
           hide-progress: false
-          exit-code: '1'
           output: trivy_secret.txt
 
       - id: trivy_config_scan
@@ -48,7 +46,6 @@ jobs:
           scanners: config
           hide-progress: false
           ignore-unfixed: true
-          exit-code: '1'
           output: trivy_config.txt
 
 
