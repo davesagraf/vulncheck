@@ -70,12 +70,12 @@ jobs:
         with:
           name: snyk-dependencies-report
           path: .
-      - run: unzip $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts/snyk-dependencies-report.zip
+      - run: unzip snyk-dependencies-report.zip
       - uses: actions/download-artifact@v4
         with:
           name: snyk-code-report
           path: .
-      - run: unzip $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts/snyk-code-report.zip
+      - run: unzip snyk-code-report.zip
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
