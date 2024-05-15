@@ -70,12 +70,14 @@ jobs:
         with:
           name: snyk-dependencies-report
           path: snyk-dependencies-report
-      - run: unzip snyk-dependencies-report.zip
+      - run: ls -R snyk-dependencies-report
+      # - run: unzip snyk-dependencies-report.zip
       - uses: actions/download-artifact@v4
         with:
           name: snyk-code-report
           path: snyk-code-report
-      - run: unzip snyk-code-report.zip
+      - run: ls -R snyk-code-report
+      # - run: unzip snyk-code-report/snyk-code-report.zip
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
@@ -84,6 +86,6 @@ jobs:
       - name: Install Snyk To HTML
         run: npm install snyk-to-html -g
       - name: Generate Report for Snyk Open Source
-        run: snyk-to-html -i snyk_dependencies.json -o snyk_dependencies.html
+        run: snyk-to-html -i snyk-dependencies-report/snyk_dependencies.json -o snyk_dependencies.html
       - name: Generate Report for Snyk Code
-        run: snyk-to-html -i snyk_code.json -o snyk_code.html
+        run: snyk-to-html -i snyk-code-report/snyk_code.json -o snyk_code.html
