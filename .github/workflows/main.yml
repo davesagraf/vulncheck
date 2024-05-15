@@ -18,7 +18,7 @@ jobs:
           command: test --json-file-output=snyk_dependencies.json
           json: true
           args: --json-file-output=snyk_dependencies.json
-        continue-on-error: true
+        # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - uses: actions/upload-artifact@v4
@@ -36,7 +36,7 @@ jobs:
           command: code test --json-file-output=snyk_code.json
           json: true
           args: --json-file-output=snyk_code.json
-        continue-on-error: true
+        # continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - uses: actions/upload-artifact@v4
@@ -91,6 +91,5 @@ jobs:
         with:
           name: snyk-dependencies-report-html
           path: snyk_dependencies.html
-          compression-level: 0
       # - name: Generate Report for Snyk Code
       #   run: snyk-to-html -i snyk-code-report/snyk_code.json -o snyk_code.html
