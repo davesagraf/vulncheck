@@ -21,6 +21,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: vuln
+          vuln-type: os, library
           hide-progress: false
           output: trivy_vuln.txt
 
