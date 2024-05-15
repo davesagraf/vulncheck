@@ -11,10 +11,10 @@ jobs:
   opensource-security:
     runs-on: ubuntu-latest
     outputs:
-      snykopensourceoutput: ${{ steps.snykopensource.outputs.snykopensourceoutput }}
+      snyk_open_source_output: ${{ steps.snyk_open_source.outputs.snyk_open_source_output }}
     steps:
       - uses: actions/checkout@master
-      - id: snykopensource
+      - id: snyk_open_source
         name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
@@ -32,10 +32,10 @@ jobs:
   code-security:
     runs-on: ubuntu-latest
     outputs:
-      snykcodeoutput: ${{ steps.snykcode.outputs.snykcodeoutput }}
+      snyk_code_output: ${{ steps.snyk_code.outputs.snyk_code_output }}
     steps:
       - uses: actions/checkout@master
-      - id: snykcode
+      - id: snyk_code
         name: Run Snyk to check for vulnerabilities in code
         uses: snyk/actions/node@master
         with:
@@ -58,10 +58,10 @@ jobs:
       - uses: actions/checkout@master
       - name: Accept or Decline PR based on Snyk Results
         env:
-          SNYKOPENSOURCEOUTPUT: ${{needs.opensource-security.outputs.snykopensourceoutput}}
-          SNYKCODEOUTPUT: ${{needs.code-security.outputs.snykcodeoutput}}
+          SNYK_OPEN_SOURCE_OUTPUT: ${{needs.opensource-security.outputs.snyk_open_source_output}}
+          SNYK_CODE_OUTPUT: ${{needs.code-security.outputs.snyk_code_output}}
       
-        if: ${{ contains(needs.opensource-security.outputs.snykopensourceoutput, 'No issues were found') && contains(needs.code-security.outputs.snykcodeoutput, 'No issues were found') }}
+        if: ${{ contains(needs.opensource-security.outputs.snyk_open_source_output, 'No issues were found') && contains(needs.code-security.outputs.snyk_code_output, 'No issues were found') }}
         run: 
           echo "No vulnerabilities found, PR can be merged."
       - name: PR post decline step
