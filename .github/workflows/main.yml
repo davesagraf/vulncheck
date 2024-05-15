@@ -1,4 +1,4 @@
-name: NodeJS CI/CD with Snyk
+name: REQ CI/CD Security Pipeline with Snyk
 
 on:
   push:
@@ -10,42 +10,60 @@ on:
 jobs:
   opensource-security:
     runs-on: ubuntu-latest
+    outputs:
+      snyk_open_source_output: ${{ steps.snyk_open_source.outputs.snyk_open_source_output }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Run Snyk to check for vulnerabilities in dependencies
+      - uses: actions/checkout@master
+      - id: snyk_open_source
+        name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
-          command: test --all-projects --json-file-output=snyk_dependencies.json
+          command: test --json-file-output=snyk_dependencies.json
+          json: true
+          args: --json-file-output=snyk_dependencies.json
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snyk-dependencies-report
+          path: snyk_dependencies.json
 
   code-security:
     runs-on: ubuntu-latest
     outputs:
-      code-ok: ${{ steps.snyk-code-output.outputs.is-secure }}
+      snyk_code_output: ${{ steps.snyk_code.outputs.snyk_code_output }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Run Snyk to check for vulnerabilities in code
-        id: snyk-code
+      - uses: actions/checkout@master
+      - id: snyk_code
+        name: Run Snyk to check for vulnerabilities in code
         uses: snyk/actions/node@master
         with:
-          command: code test --all-projects --json-file-output=snyk_code.json
+          command: code test --json-file-output=snyk_code.json
+          json: true
+          args: --json-file-output=snyk_code.json
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snyk-code-report
+          path: snyk_code.json
 
   handle-pr:
     needs: [opensource-security, code-security]
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
       - name: Accept or Decline PR based on Snyk Results
-        if: ${{ ! contains(needs.opensource-security.result, 'failure') && ! contains(needs.code-security.result, 'failure') }}
+        env:
+          SNYK_OPEN_SOURCE_OUTPUT: ${{needs.opensource-security.outputs.snyk_open_source_output}}
+          SNYK_CODE_OUTPUT: ${{needs.code-security.outputs.snyk_code_output}}
+      
+        if: ${{ contains(needs.opensource-security.outputs.snyk_open_source_output, 'No issues were found') && contains(needs.code-security.outputs.snyk_code_output, 'No issues were found') }}
         run: 
           echo "No vulnerabilities found, PR can be merged."
-          
       - name: PR post decline step
         if: ${{ failure() }}
         run: 
@@ -55,11 +73,33 @@ jobs:
   summary-report:
     needs: [opensource-security, code-security]
     runs-on: ubuntu-latest
+    if: always()
     steps:
-      - uses: actions/checkout@v2    
-      - name: Add Job Summary from Snyk reports
-        uses: medly/snyk-job-summary-action@v1.0.0
+      - uses: actions/checkout@master
+      - uses: actions/download-artifact@v4
         with:
-            dependencies-report-path: snyk_dependencies.json 
-            code-report-path: snyk_code.json 
-        if: always()
+          name: snyk-dependencies-report
+          path: snyk-dependencies-report
+      - run: ls -R snyk-dependencies-report
+      # - run: unzip snyk-dependencies-report.zip
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     name: snyk-code-report
+      #     path: snyk-code-report
+      # - run: ls -R snyk-code-report
+      # - run: unzip snyk-code-report/snyk-code-report.zip
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install Snyk To HTML
+        run: npm install snyk-to-html -g
+      - name: Generate Report for Snyk Open Source
+        run: snyk-to-html -i snyk-dependencies-report/snyk_dependencies.json -o snyk_dependencies.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snyk-dependencies-report-html
+          path: snyk_dependencies.html
+      # - name: Generate Report for Snyk Code
+      #   run: snyk-to-html -i snyk-code-report/snyk_code.json -o snyk_code.html
