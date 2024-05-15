@@ -69,12 +69,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: snyk-dependencies-report
-          path: .
+          path: snyk-dependencies-report
       - run: unzip snyk-dependencies-report.zip
       - uses: actions/download-artifact@v4
         with:
           name: snyk-code-report
-          path: .
+          path: snyk-code-report
       - run: unzip snyk-code-report.zip
       - name: Use Node.js
         uses: actions/setup-node@v3
