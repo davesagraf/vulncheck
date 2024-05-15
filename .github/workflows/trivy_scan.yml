@@ -22,7 +22,7 @@ jobs:
         with:
           scan-type: vuln
           vuln-type: os, library
-          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
           hide-progress: false
           output: trivy_vuln.txt
 
