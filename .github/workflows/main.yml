@@ -1,4 +1,4 @@
-name: NodeJS CI/CD with Snyk
+name: REQ CI/CD Security Pipeline with Snyk
 
 on:
   push:

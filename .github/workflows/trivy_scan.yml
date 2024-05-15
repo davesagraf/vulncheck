@@ -1,0 +1,40 @@
+name: REQ CI/CD Security Pipeline with Trivy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  opensource-security:
+    runs-on: ubuntu-latest
+    outputs:
+      trivy_scan_output: ${{ steps.trivy_scan.outputs.trivy_scan_output }}
+    steps:
+      - uses: actions/checkout@master
+      - id: trivy_scan
+        name: Run Trivy scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+            scan-type: vuln, secret, config
+            ignore-unfixed: true
+            hide-progress: false
+            output: trivy.txt
+            exit-code: '1'
+
+      - name: Publish Trivy Output to Summary
+        if: always()
+        run: |
+            if [[ -s trivy.txt ]]; then
+            {
+                echo "### Trivy Security Output"
+                echo "<details><summary>Click to expand</summary>"
+                echo ""
+                echo '```REQ Security Report'
+                cat trivy.txt
+                echo '```'
+                echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+            fi
