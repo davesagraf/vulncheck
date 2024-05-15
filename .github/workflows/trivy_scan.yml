@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  opensource-security:
+  trivy_security_scan:
     runs-on: ubuntu-latest
     outputs:
       trivy_scan_output: ${{ steps.trivy_scan.outputs.trivy_scan_output }}
@@ -18,23 +18,23 @@ jobs:
         name: Run Trivy scanner
         uses: aquasecurity/trivy-action@master
         with:
-            scan-type: vuln, secret, config
-            ignore-unfixed: true
-            hide-progress: false
-            output: trivy.txt
-            exit-code: '1'
+          scan-type: vuln, secret, config
+          ignore-unfixed: true
+          hide-progress: false
+          output: trivy.txt
+          exit-code: '1'
 
       - name: Publish Trivy Output to Summary
         if: always()
         run: |
-            if [[ -s trivy.txt ]]; then
+          if [[ -s trivy.txt ]]; then
             {
-                echo "### Trivy Security Output"
-                echo "<details><summary>Click to expand</summary>"
-                echo ""
-                echo '```REQ Security Report'
-                cat trivy.txt
-                echo '```'
-                echo "</details>"
+              echo "### Trivy Security Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```REQ Security Report'
+              cat trivy.txt
+              echo '```'
+              echo "</details>"
             } >> $GITHUB_STEP_SUMMARY
-            fi
+          fi
