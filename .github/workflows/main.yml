@@ -87,5 +87,10 @@ jobs:
         run: npm install snyk-to-html -g
       - name: Generate Report for Snyk Open Source
         run: snyk-to-html -i snyk-dependencies-report/snyk_dependencies.json -o snyk_dependencies.html
+      - uses: actions/upload-artifact@v4
+      with:
+        name: snyk-dependencies-report-html
+        path: snyk_dependencies.html
+        compression-level: 0
       # - name: Generate Report for Snyk Code
       #   run: snyk-to-html -i snyk-code-report/snyk_code.json -o snyk_code.html
