@@ -20,7 +20,8 @@ jobs:
         name: Run Trivy Vuln scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: vuln
+          scan-type: fs
+          scanners: vuln
           vuln-type: os, library
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
           hide-progress: false
@@ -30,7 +31,8 @@ jobs:
         name: Run Trivy Secrets scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: secret
+          scan-type: fs
+          scanners: secret
           ignore-unfixed: true
           hide-progress: false
           output: trivy_secret.txt
@@ -39,7 +41,8 @@ jobs:
         name: Run Trivy Config scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: config
+          scan-type: fs
+          scanners: config
           hide-progress: false
           output: trivy_config.txt
           exit-code: '1'
