@@ -11,7 +11,7 @@ jobs:
   opensource-security:
     runs-on: ubuntu-latest
     outputs:
-      snykopensourceoutput: ${{ steps.snykopensource }}
+      snykopensourceoutput: ${{ steps.snykopensource.outputs.snykopensourceoutput }}
     steps:
       - uses: actions/checkout@master
       - id: snykopensource
@@ -32,7 +32,7 @@ jobs:
   code-security:
     runs-on: ubuntu-latest
     outputs:
-      snykcodeoutput: ${{ steps.snykcode }}
+      snykcodeoutput: ${{ steps.snykcode.outputs.snykcodeoutput }}
     steps:
       - uses: actions/checkout@master
       - id: snykcode
