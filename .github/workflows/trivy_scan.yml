@@ -21,7 +21,6 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: vuln
-          ignore-unfixed: true
           hide-progress: false
           output: trivy_vuln.txt
 
