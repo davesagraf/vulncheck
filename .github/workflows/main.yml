@@ -10,15 +10,18 @@ on:
 jobs:
   opensource-security:
     runs-on: ubuntu-latest
+    outputs:
+      snyk_open_source: ${{ steps.snyk_open_source }}
     steps:
       - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities in dependencies
+      - id: snyk_open_source
+        name: Run Snyk to check for vulnerabilities in dependencies
         uses: snyk/actions/node@master
         with:
           command: test --json-file-output=snyk_dependencies.json
           json: true
           args: --json-file-output=snyk_dependencies.json
-        # continue-on-error: true
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - uses: actions/upload-artifact@v4
@@ -28,15 +31,18 @@ jobs:
 
   code-security:
     runs-on: ubuntu-latest
+    outputs:
+      snyk_code: ${{ steps.snyk_code }}
     steps:
       - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities in code
+      - id: snyk_code
+        name: Run Snyk to check for vulnerabilities in code
         uses: snyk/actions/node@master
         with:
           command: code test --json-file-output=snyk_code.json
           json: true
           args: --json-file-output=snyk_code.json
-        # continue-on-error: true
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       - uses: actions/upload-artifact@v4
@@ -51,7 +57,11 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Accept or Decline PR based on Snyk Results
-        if: ${{ ! needs.opensource-security.result == failure() && ! needs.code-security.result == failure() }}
+        env:
+          SNYK_OPEN_SOURCE: ${{needs.opensource-security.outputs.snyk_open_source}}
+          SNYK_CODE: ${{needs.code-security.outputs.snyk_code}}
+      
+        if: ${{ contains(needs.opensource-security.outputs.snyk_open_source, 'No issues were found') && contains(needs.code-security.outputs.snyk_code, 'No issues were found') }}
         run: 
           echo "No vulnerabilities found, PR can be merged."
       - name: PR post decline step
