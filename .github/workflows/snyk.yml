@@ -115,3 +115,5 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
+
+# add this line to test changes for PR management
