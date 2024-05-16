@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - id: snyk_open_source
-        name: Run Snyk to check for vulnerabilities in dependencies
+        name: Run Snyk to check for vulnerabilities in dependencies and make a report
         uses: snyk/actions/node@master
         with:
           command: test --json-file-output=snyk_dependencies.json
@@ -103,3 +103,15 @@ jobs:
           path: snyk_dependencies.html
       # - name: Generate Report for Snyk Code
       #   run: snyk-to-html -i snyk-code-report/snyk_code.json -o snyk_code.html
+
+  snyk-final-opensource-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - id: snyk_final_opensource_security
+        name: Run Snyk again to fail PR if vulnerabilities are found
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
